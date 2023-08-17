@@ -1,0 +1,15 @@
+{
+    "name": "qhardwarebenchmark.fredldotme",
+    "description": "Testing various Qt-internal ways of working in apps",
+    "architecture": "@CLICK_ARCH@",
+    "title": "QHardwareBenchmark",
+    "hooks": {
+        "qhardwarebenchmark": {
+            "apparmor": "qhardwarebenchmark.apparmor",
+            "desktop":  "qhardwarebenchmark.desktop"
+        }
+    },
+    "version": "1.0.0",
+    "maintainer": "Alfred Neumayer <dev.beidl@gmail.com>",
+    "framework" : "@CLICK_FRAMEWORK@"
+}

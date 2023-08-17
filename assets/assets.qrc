@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/assets">
+        <file>logo.svg</file>
+        <file>nasa.jpg</file>
+    </qresource>
+</RCC>
