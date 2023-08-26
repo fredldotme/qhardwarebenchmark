@@ -22,32 +22,12 @@
 
 #include "example.h"
 
+ImageHolder* ImageHolder::s_instance = new ImageHolder();
+
 BenchmarkItem::BenchmarkItem(QQuickItem* parent) : QQuickItem(parent),
-    m_sourceDirty(true)
+    m_sourceDirty(true), m_load(false), m_texture(nullptr)
 {
     setFlags(QQuickItem::ItemHasContents);
-    connect(this, &BenchmarkItem::sourceChanged, this, [=]() {
-        m_sourceDirty = true;
-        const auto imageLoaderFunc = [=](){
-            m_image = QImage(m_source);
-            QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
-        };
-        QtConcurrent::run(QThreadPool::globalInstance(), imageLoaderFunc);
-    });
-}
-
-void BenchmarkItem::setSource(QString source)
-{
-    if (m_source == source)
-        return;
-
-    m_source = source;
-    emit sourceChanged();
-}
-
-QString BenchmarkItem::source()
-{
-    return m_source;
 }
 
 QSGNode *BenchmarkItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
@@ -59,11 +39,29 @@ QSGNode *BenchmarkItem::updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
     }
     if (!n) {
         n = new QSGSimpleTextureNode();
-        n->setTexture(window()->createTextureFromImage(m_image));
-        n->setOwnsTexture(true);
-        emit textureChanged();
+        if (m_sourceDirty) {
+            if (m_texture) {
+                m_texture->deleteLater();
+            }
+            m_texture = window()->createTextureFromImage(m_load ? ImageHolder::s_instance->image : QImage());
+            n->setTexture(m_texture);
+            n->setRect(0, 0, width(), height());
+            n->setFiltering(QSGTexture::Linear);
+            n->setOwnsTexture(false);
+            n->markDirty(QSGNode::DirtyMaterial | QSGNode::DirtyGeometry);
+            m_texture->bind();
+            QMetaObject::invokeMethod(this, "textureChanged", Qt::QueuedConnection);
+            m_load = false;
+        }
     }
     n->setRect(boundingRect());
     m_sourceDirty = false;
     return n;
+}
+
+void BenchmarkItem::loadImage()
+{
+    m_sourceDirty = true;
+    m_load = true;
+    QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }

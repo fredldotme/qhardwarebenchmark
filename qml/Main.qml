@@ -31,15 +31,17 @@ MainView {
     width: units.gu(45)
     height: units.gu(75)
 
+    readonly property int numberOfRuns : 30
+
     property bool benchmarking : false
     property int doneBenchmarks : 0
-    property string image : ""
     property double startTime : new Date().getTime()
     function updateTime() {
         timeLabel.text = new Date().getTime() - startTime + " ms"
     }
 
     Page {
+        id: page
         anchors.fill: parent
 
         header: PageHeader {
@@ -47,8 +49,10 @@ MainView {
             title: i18n.tr('QHardwareBenchmark')
         }
 
+        property alias repeater: repeater;
         Repeater {
-            model: 50
+            id: repeater
+            model: numberOfRuns
             anchors {
                 top: header.bottom
                 left: parent.left
@@ -57,13 +61,13 @@ MainView {
             }
             BenchmarkItem {
                 id: benchmarkItem
-                source: image
-                width: 100
-                height: 100
+                width: 50
+                height: 50
+                visible: true
                 onTextureChanged: {
                     if (benchmarking) {
                         updateTime();
-                        if (++doneBenchmarks == 50) {
+                        if (++doneBenchmarks == numberOfRuns) {
                             benchmarking = false;
                             startBenchmarkButton.color = "green"
                         }
@@ -96,16 +100,56 @@ MainView {
                 Layout.alignment: Qt.AlignHCenter
                 text: i18n.tr('Press here!')
                 onClicked: {
+                    startTime = new Date().getTime()
                     doneBenchmarks = 0
                     benchmarking = true
-                    startTime = new Date().getTime()
-                    image = ":/assets/nasa.jpg"
+                    for (let i = 0; i < numberOfRuns; i++) {
+                        page.repeater.itemAt(i).loadImage()
+                    }
                 }
             }
 
             Item {
                 Layout.fillHeight: true
             }
+        }
+
+        Rectangle {
+            id: jankIndicator1
+            color: "red"
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            visible: benchmarking
+        }
+
+        Rectangle {
+            id: jankIndicator2
+            color: "green"
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            visible: benchmarking
+        }
+
+        PropertyAnimation {
+            target: jankIndicator1
+            loops: Animation.Infinite
+            from: 0
+            to: root.width
+            duration: 700
+            running: benchmarking
+        }
+
+        XAnimator {
+            target: jankIndicator2
+            loops: Animation.Infinite
+            from: 0
+            to: root.width
+            duration: 1000
+            running: benchmarking
         }
     }
 }

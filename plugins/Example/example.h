@@ -19,11 +19,21 @@
 
 #include <QQuickItem>
 #include <QImage>
+#include <QSGTexture>
+
+class ImageHolder : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ImageHolder(QObject* parent = nullptr) { image.load(":/assets/nasa.jpg"); }
+
+    static ImageHolder* s_instance;
+    QImage image;
+};
 
 class BenchmarkItem : public QQuickItem
 {
     Q_OBJECT
-    Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
 
 public:
     explicit BenchmarkItem(QQuickItem *parent = nullptr);
@@ -31,16 +41,15 @@ public:
 
     QSGNode* updatePaintNode(QSGNode* node, UpdatePaintNodeData* data);
 
-private:
-    void setSource(QString source);
-    QString source();    
+public slots:
+    void loadImage();
 
-    QString m_source;
+private:
     bool m_sourceDirty;
-    QImage m_image;
+    bool m_load;
+    QSGTexture* m_texture;
 
 signals:
-    void sourceChanged();
     void textureChanged();
 };
 
